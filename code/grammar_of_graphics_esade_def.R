@@ -1,0 +1,342 @@
+
+
+# Introduction to the Grammar of Graphics
+
+# Write here a short introduction about Wilkinson's seminal work and the adaptation done by Wickham in ggplot2. This is the starting point giving context to the grammar we are going to be using in this workshop.
+# 
+# Intro here our super simplified version, a way to create the three major kind of plots with using rules from original or ggplot2 syntax, suitable to be used with pen and paper. Explain the components to be used later.
+# 
+# 
+# ------
+# 
+# The grammar of graphics is a system by which you can build any kind of chart using the same components:
+# 
+# - Data set and its variables (continuous, discrete, temporal)
+# - Aesthetic properties (x/y position, length, size, colour...)
+# - Geometric shapes (line, bar, point...)
+# - Coordinate system (cartesian, polar)
+# - Title
+# - Axis labels
+# - Legend
+# - Facet
+# 
+# 
+# About variables nature: 
+# 
+# - Continuous
+# - Discrete (Nominal & Ordinal)
+# - Temporal
+# 
+# __Create a chart by: Mapping variables to aesthetic properties of geometric shapes using a coordinates system__
+# 
+# ------
+# 
+# Schneiderman mantra: __overview first, then zoom and filter, get details on demand__
+# 
+# ------
+# 
+# # Main charts and their basic utility
+# 
+# Today we are going to explain and use three charts, used universally and useful to tackle most of the situations in dtaat visualization
+# 
+# - Line chart: It's is used when you want to view the temporal evolution of a given variable.
+# - Bar chart: It's is used when you want to compare elements of a given variable
+# - Scatter plot: It's used when you want to find correlations between two variables.
+# 
+# Today we will introduce these charts a we need them. They will be built following our super simplified version of the grammar of graphics.
+
+
+  
+  # Start using the super simplified version by importing our dataset
+  
+#The data set we are going to be working with it's a dataset with the temporal evolution of the access to clean water worldwide at country level from 1990 to 2015. It's is originally coming from one of the UN's millenium goals.
+
+## Import the data set and have a initial overview:
+
+
+
+options(scipen=999) # avoid scientic notation
+
+# Set up current directory
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+setwd("/Users/albertogonzalez/Dropbox/work_17/bestiario/Mark")
+
+
+# Import Natgeo water data set and have a initial overiew
+natgeo_water = read.csv("natgeo_water_refined.csv")
+str(natgeo_water)
+
+
+
+## Line charts: Make your first line chart: 
+
+# __Line chart: It's is used when you want to view the temporal evolution of a given variable.__
+# 
+# Which is the temporal evolution of the % of people living in rural areas with access to clean water in Ethiopia?
+  
+
+
+# The first thing we need to do is to filter Ethiopia´s data
+
+eth_df = natgeo_water %>%
+  filter(iso == "ETH")
+
+
+# And now we are going to build our first line chart to try to answer the question
+
+g1 = ggplot(eth_df,aes(year,rural_water_imp_per)) + geom_line() + theme_minimal() + ggtitle("Percentage of rural population in Ethiopia with access to clean water from 1990 to 2015") +  xlab("years") + ylab("% of rural population with access to clean water")
+g1
+
+# Looks like there is a clear increasing trend of people living in rural areas in Ethiopia with access to clean water
+
+
+
+## Line charts: Make your second line chart using the knowledge in the first one:
+
+#Looks like in Ethiopia the trend is increasing, is it the same in other countries?
+  
+
+
+# We are going to build a line per country
+g2 = ggplot(natgeo_water,aes(year,rural_water_imp_per,group=country)) + geom_line(alpha = 0.4) + theme_minimal()  + ggtitle("Percentage of rural population by country with access to clean water from 1990 to 2015") +  xlab("years") + ylab("% of rural population with access to clean water")
+g2
+
+
+
+#Looks like despite some countries have decreasing trend, the majority of lines have increasing trend, less and less people are not accessing to clean water in the recent years. The issue here is that we have more than 200 lines, which makes difficult to see clear trends. In the next step we will try to get a more clear picture.
+
+## Line charts: Improve legibility of the last chart
+
+#We are going to introduce a concept called "faceting" which allows us to include a new variable and create several chart to be easily comparable.
+
+
+
+
+# We will try to include region as faceting varible, to have a many line charts as regions, each of them including just their corresponding countries.
+
+g3 = ggplot(natgeo_water,aes(year,rural_water_imp_per,group = country)) + geom_line(alpha=0.4) + facet_wrap(~region) + theme_minimal() + ggtitle("Percentage of rural population by country and region with access to clean water from 1990 to 2015") +  xlab("years") + ylab("% of rural population with access to clean water")
+g3
+
+
+
+#Looks like we can confirm that in most of the regions the trends are increasing, although there is one exception, Sub-Saharan Africa
+
+
+  
+  ## Bar charts: Let's focus on the Sub-Saharan Africa
+  
+  # Which is the behaviour by country in Sub-Saharan africa?
+  
+#  __Bar chart: It's is used when you want to compare elements of a given variable__
+
+
+
+# Start by filtering data from Sub-Saharan countries
+
+sub_saharan_df = natgeo_water %>%
+filter(region == "Sub-Saharan Africa")
+
+str(sub_saharan_df)
+
+
+
+#Let's start with plotting the situation of rural people in 1990 and 2015
+
+
+
+sub_saharan_init = sub_saharan_df %>%
+  filter(year == 1990)
+
+str(sub_saharan_init)
+
+
+g4 = ggplot(sub_saharan_init,aes(x = reorder(country,-rural_water_imp_per),y = rural_water_imp_per)) + geom_bar(stat = "identity") + theme_minimal() + ggtitle("Percentage of rural population in Sub-Saharan Africa countries with access to clean water in 1990") +  xlab("countries") + ylab("% of rural population with access to clean water")
+g4
+
+
+
+#It's dfficult to see the country names, let's flip the Axis
+
+
+g4 + coord_flip()
+
+
+
+
+#And so what happens in 2015?
+  
+  
+
+
+sub_saharan_last = sub_saharan_df %>%
+  filter(year == 2015)
+
+str(sub_saharan_last)
+
+
+g5 = ggplot(sub_saharan_last,aes(x = reorder(country,-rural_water_imp_per),y = rural_water_imp_per)) + geom_bar(stat = "identity") + theme_minimal() + ggtitle("Percentage of rural population in Sub-Saharan Africa countries with access to clean water in 2015") +  xlab("countries") + ylab("% of rural population with access to clean water")
+g5
+
+g5 + coord_flip()
+
+
+
+
+#That's fine, but you can't see the evolution of people not having access at country level and being able to compare from 1990 to 2015. Is there a way that we can do that using bar charts?
+  
+  
+#  Let's filter results of 1990 and 2015
+
+
+
+
+years = c(1990,2015)
+
+sub_saharan_compare = sub_saharan_df %>%
+filter(year %in% years)
+
+
+sub_saharan_compare$year = as.factor(as.numeric(sub_saharan_compare$year))
+
+str(sub_saharan_compare)
+
+
+
+
+#We are going to calculate the difference bwetween 2015 and 1990
+
+
+
+
+# Select the necessary cols
+compare_df = sub_saharan_compare %>%
+select("country","year","rural_water_imp_per")
+
+# Convert year to wide format using "spread"
+# formula = (data,key,value)
+compare_df_wide = spread(compare_df,"year","rural_water_imp_per")
+compare_df_wide$diff = compare_df_wide$`2015` - compare_df_wide$`1990`
+head(compare_df_wide)
+
+
+
+
+#And now we can plot differences to see countries that improved and the opposite
+
+
+
+g5_b = ggplot(compare_df_wide,aes(x = reorder(country,-diff),y = diff)) + geom_bar(stat = "identity") + theme_minimal() + ggtitle("% of rural population in Sub-Saharan Africa countries with access to clean water (2015 - 1990)") +  xlab("countries") + ylab("% 2015 - % 1990")
+g5_b
+
+g5_b + coord_flip()
+
+
+
+
+#But we can't spot the specific country we are looking for because this country does not have results in 1990 and 2015, its records go from 1995 to 2010. Let's work with that range of years.
+
+
+years_2 = c(1995,2010)
+
+sub_saharan_compare_2 = sub_saharan_df %>%
+filter(year %in% years_2)
+
+
+sub_saharan_compare_2$year = as.factor(as.numeric(sub_saharan_compare_2$year))
+
+
+# Now we calculate difference between 2010 and 1995 and plot them
+compare_df_2 = sub_saharan_compare_2 %>%
+select("country","year","rural_water_imp_per")
+
+# Convert year to wide format using "spread"
+# formula = (data,key,value)
+compare_df_wide_2 = spread(compare_df_2,"year","rural_water_imp_per")
+compare_df_wide_2$diff = compare_df_wide_2$`2010` - compare_df_wide_2$`1995`
+head(compare_df_wide_2)
+
+g5_c = ggplot(compare_df_wide_2,aes(x = reorder(country,-diff),y = diff)) + geom_bar(stat = "identity") + theme_minimal() + ggtitle("% of rural population in Sub-Saharan Africa countries with access to clean water (2010 - 1995)") +  xlab("countries") + ylab("% 2010 - % 1995")
+g5_c
+
+g5_c + coord_flip()
+
+
+
+
+
+## Scatter plots: Bivariate charts for finding correlations amongst variables: 
+
+#__Scatter plot: It's used when you want to find correlations between two variables.__
+
+#Is there a correlation between access to clean water in rural and urban areas?
+  
+
+
+g9 = ggplot(natgeo_water,aes(rural_water_imp_per,urban_water_imp_per)) + geom_point() + theme_minimal()  + ggtitle("% of rural and urban population by country with access to clean water from 1990 to 2015") +  xlab("% of rural population with access to clean water") + ylab("% of urban population with access to clean water")
+g9
+
+
+
+#Looks pretty clear there is a positive and strong correlation. In order to have more info about who is who, shall using total population as size be helpful?
+  
+
+
+g10 = ggplot(natgeo_water,aes(rural_water_imp_per,urban_water_imp_per,size=total_pop)) + geom_point() + theme_minimal() + scale_size(range=c(1,14)) + ggtitle("% of rural and urban population by country with access to clean water from 1990 to 2015") +  xlab("% of rural population with access to clean water") + ylab("% of urban population with access to clean water")
+g10
+
+
+
+#We can apply alpha to the points to minimise the current overplotting
+
+
+
+g11 = ggplot(natgeo_water,aes(rural_water_imp_per,urban_water_imp_per,size=total_pop)) + geom_point(alpha = 0.4) + theme_minimal() + scale_size(range=c(1,14)) + ggtitle("% of rural and urban population by country with access to clean water from 1990 to 2015") +  xlab("% of rural population with access to clean water") + ylab("% of urban population with access to clean water")
+g11
+
+
+
+
+#There is still a lot of points to have a good understanding, we have several values per country (chunks of 5 years from 1990 to 2015). As we are interested in knowing the current situation, let's filter just 2015 values
+
+
+
+
+last_df = natgeo_water %>%
+filter(year == 2015)
+
+g12 = ggplot(last_df,aes(rural_water_imp_per,urban_water_imp_per,size=total_pop)) + geom_point(alpha = 0.4) + theme_minimal() + scale_size(range=c(1,12)) + xlim(0,100) + ylim(0,100) + ggtitle("% of rural and urban population by country with access to clean water in 2015") +  xlab("% of rural population with access to clean water") + ylab("% of urban population with access to clean water")
+g12
+
+
+
+
+#There is two very interesting parts, one with a ocuntry with bettter access in rural areas than in urban areas and there is another chunk of countries ranging from 25 to 85 in X and form 50 to 100 in Y.
+
+
+g13 = ggplot(last_df,aes(rural_water_imp_per,urban_water_imp_per,size=total_pop)) + geom_point(alpha = 0.4) + theme_minimal() + xlim(25,85) + ylim(50,100) + scale_size(range=c(2,12)) + geom_text(aes(label=country),size=3) + ggtitle("% of rural and urban population by country (selected countries) with access to clean water in 2015") +  xlab("% of rural population with access to clean water") + ylab("% of urban population with access to clean water")
+g13
+
+
+g13_bis = ggplot(last_df,aes(rural_water_imp_per,urban_water_imp_per,size=total_pop)) + theme_minimal() + xlim(25,85) + ylim(50,100) + scale_size(range=c(2,12)) + geom_text(aes(label=country),size=3) + ggtitle("% of rural and urban population by country (selected countries) with access to clean water in 2015") +  xlab("% of rural population with access to clean water") + ylab("% of urban population with access to clean water")
+g13_bis
+
+
+# Finally, let's try to add region as facet variable
+
+g14 =  ggplot(last_df,aes(rural_water_imp_per,urban_water_imp_per,size=total_pop)) + theme_minimal() + xlim(25,90) + ylim(50,100) + scale_size(range=c(2,12)) + geom_point(alpha = 0.4) + facet_wrap(~region) + ggtitle("% of rural and urban population by region and country (selected countries) with access to clean water in 2015") +  xlab("% of rural population with access to clean water") + ylab("% of urban population with access to clean water")
+g14
+
+# Zoom in Sub-Saharan Africa
+
+sub_sa = last_df %>%
+  filter(region == "Sub-Saharan Africa")
+
+
+g15 =  ggplot(sub_sa,aes(rural_water_imp_per,urban_water_imp_per,size=total_pop))  + theme_minimal() + geom_point(alpha = 0.4) + xlim(25,90) + ylim(50,100) + scale_size(range=c(2,12)) + geom_text(aes(label=country),size=3) + ggtitle("% of rural and urban population by region and country (sub-saharan africa countries) with access to clean water in 2015") +  xlab("% of rural population with access to clean water") + ylab("% of urban population with access to clean water")
+g15
+
+
+
+
